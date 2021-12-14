@@ -11,7 +11,8 @@ import pandas as pd
 #shape of the plot.
 
 rc=0.15 #Mpc
-Tgas0=3 #keV
+Tgas0=3000#*u.eV#.to('K') #keV
+print(Tgas0)
 
 def xray_mass_profile(r,rc,Tgas0):
     rc=rc
@@ -20,16 +21,16 @@ def xray_mass_profile(r,rc,Tgas0):
     kB=const.k_B.value
     mu=1 #Mean molcular weight of ICM
     mp=const.m_p.value
-    prefactor=((kB*Tgas0)/(G*mu*mp))
+    prefactor=((3000)/(G*mu*mp))
     term1=(1+(r/(7*rc)))**-1.6
     term2=((2*(r**2) ) / ((rc**2)+(r**2)) )
     term3=(1.6*r / ((7*rc)+r) )
     M = prefactor * r * term1 * (term2 + term3)
     return M
 
-r=np.linspace(0,100,100) #r in Mpc
+r=np.linspace(0,1,1000) #r in Mpc
 
-#print(const.k_B,const.m_p,const.G)
+print(const.k_B,const.m_p,const.G)
 
 plt.figure(0)
 plt.plot(r,xray_mass_profile(r,rc,Tgas0))
@@ -44,11 +45,25 @@ mean mass density of the cluster is 500 times greater than the critical density 
 Universe, and M500 is the mass within this radius.
 '''
 
-rho_c=(3*(cosmo.H0.value**2)) / (8*np.pi*(const.G))
+rho_c=(1e6*const.M_sun.to('kg').value*3*(cosmo.H0.value**2)) / (8*np.pi*(const.G.value)*3.0857e22) #units converted to give M_sun/Mpc
+#rho_c=(3*(cosmo.H0.value**2)) / (8*np.pi*(const.G.value))
+rho_500=rho_c*500
+print(rho_500)
 
 #r500 is the radius within which the mean density is 500 * rho_c
 
-rho500=rho_c*500
+M_arr=xray_mass_profile(r,rc,Tgas0)
+density_i=0
+i=1
+
+while density_i<rho_500:
+    M_i=M_arr[i]
+    r_i=r[i]
+    volume_i=(4/3)*np.pi*r_i**3
+    density_i=M_i/volume_i
+    i+=1
+
+print('r500=',r[i],'M500=',M_arr[i],'i=',i)
 
 '''
 Problem 2: Galaxy CLuster mass
@@ -110,13 +125,18 @@ plt.figure(3)
 plt.scatter(Mgas,fgas,s=5,color='red')
 plt.xlabel('$M_{gas}$ ')
 plt.ylabel('$f_{gas}$ ')
+plt.xlim(0,16)
 plt.grid()
 #plt.title('')
 #plt.legend()
 
+dummy=np.linspace(-1,16,30)
+universal_fb=np.zeros_like(dummy) + 2/15
 
 plt.figure(4)
 plt.scatter(Mgas,fb,s=5,color='green')
+plt.plot(dummy,universal_fb,'--',color='red')
+plt.xlim(0,16)
 plt.xlabel('$M_{gas}$')
 plt.ylabel('$f_{b}$ ')
 plt.grid()
